@@ -1,6 +1,7 @@
 ﻿' arduinoVBserial
 ' Arduino and Visual Basic: Receiving Data From the Arduino
-' A simple example of sending and receiving data to and from an Arduino.  Built on the example by Martyn Currey / martyncurrey.com
+' A simple example of sending and receiving data to and from an Arduino.  
+' Code below built on the example by Martyn Currey / martyncurrey.com
 ' 
 ' Updated code for the Moto-Mast serial port remote control app written by Courtney E. Krehbiel
 ' Started July 25, 2020
@@ -15,6 +16,8 @@ Imports System.IO.Ports
 Public Class Form1
     ' Global variables
     Dim comPORT As String
+    Dim SavedcomPORT As String
+    Dim SavedBaud As String
     Dim receivedData As String = ""
     Dim connected As Boolean = False
     Dim count = 0
@@ -22,6 +25,12 @@ Public Class Form1
     ' When the program starts, add the available COM ports to the COMport drop down list
     Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         populateCOMport()
+        COMport_LBL.Text = "COM Port = " & SavedcomPORT
+        RichTextBox1.HideSelection = False              ' Set this so text box will automatically scroll to bottom as stuff is appended
+        ToolStripStatusLabel1.Text = ""                 ' Clear the status bar
+        SavedcomPORT = My.Settings.MyCOMPort            ' Get previously saved vaues
+        COMport_LBL.Text = "COM Port = " & SavedcomPORT
+        SavedBaud = My.Settings.MyBAUDRate
     End Sub
 
     'The refresh button updates the COMport list
@@ -41,6 +50,8 @@ Public Class Form1
     Private Sub comPort_ComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles comPort_ComboBox.SelectedIndexChanged
         If (comPort_ComboBox.SelectedItem <> "") Then
             comPORT = comPort_ComboBox.SelectedItem
+            SavedcomPORT = comPORT
+            COMport_LBL.Text = "COM Port = " & SavedcomPORT
         End If
     End Sub
 
@@ -50,24 +61,29 @@ Public Class Form1
     Private Sub connect_BTN_Click(sender As Object, e As EventArgs) Handles connect_BTN.Click
         comPORT = comPort_ComboBox.SelectedItem
         If (connect_BTN.Text = "Connect") Then
-            If (comPORT <> "") Then
+            If (SavedcomPORT <> "") Then
                 SerialPort1.Close()
-                SerialPort1.PortName = comPORT
-                SerialPort1.BaudRate = 9600
+                SerialPort1.PortName = SavedcomPORT
+                SerialPort1.BaudRate = SavedBaud
                 SerialPort1.DataBits = 8
-                SerialPort1.Parity = Parity.None
                 SerialPort1.StopBits = StopBits.One
+                SerialPort1.Parity = Parity.None
                 SerialPort1.Handshake = Handshake.None
                 SerialPort1.Encoding = System.Text.Encoding.Default
                 SerialPort1.ReadTimeout = 10000
+                ToolStripStatusLabel1.Text = "COM:  " & SerialPort1.PortName & "  " & SerialPort1.BaudRate & "  N, 8, 1"   ' Populate the status bar with COM information
 
-                SerialPort1.Open()
-
-                'See if the Arduino is there
-                count = 0
-                SerialPort1.WriteLine("HL#")    'This should create a reply with the HELLO response. 
-                connect_BTN.Text = "Connecting..."
-                connecting_Timer.Enabled = True
+                Try
+                    SerialPort1.Open()
+                    'See if the Arduino is there
+                    count = 0
+                    SerialPort1.WriteLine("HL#")    'This should create a reply with the HELLO response. 
+                    connect_BTN.Text = "Connecting..."
+                    connecting_Timer.Enabled = True
+                Catch Ex As Exception
+                    MsgBox(Ex.Message, MsgBoxStyle.Information, "Serial Port Error")
+                    ToolStripStatusLabel1.Text = ""
+                End Try
             Else
                 MsgBox("Select a COM port first", , "Com Port Error")
             End If
@@ -79,8 +95,9 @@ Public Class Form1
             Timer_LBL.Text = "Timer: OFF"
             SerialPort1.Close()
             connected = False
-            RichTextBox1.Text = "Port closed" & vbCrLf & vbCrLf & RichTextBox1.Text
+            RichTextBox1.AppendText(vbCrLf & "Port Closed")
             connect_BTN.Text = "Connect"
+            ToolStripStatusLabel1.Text = ""
             populateCOMport()
         End If
 
@@ -108,8 +125,8 @@ Public Class Form1
                 Next increment
 
                 connected = True
-                    RichTextBox1.Text = vbCrLf & "Port connected!"
-                    receivedData = RichTextBox1.Text    'Added to keep port connected in serial port log
+                RichTextBox1.Text = "Port connected!" & vbCrLf & vbCrLf
+                receivedData = RichTextBox1.Text    'Added to keep port connected in serial port log
                     connect_BTN.Text = "Disconnect"
                     Timer1.Enabled = True
                     Timer_LBL.Text = "Timer: ON"
@@ -124,9 +141,10 @@ Public Class Form1
 
         Else
             'time out (8 * 250 = 2 seconds)
-            RichTextBox1.Text &= vbCrLf & "ERROR" & vbCrLf & "Can not connect" & vbCrLf
+            MsgBox("Can not connect", MsgBoxStyle.Information, "Serial Port Error")
             connect_BTN.Text = "Connect"
             populateCOMport()
+            ToolStripStatusLabel1.Text = ""
         End If
 
     End Sub
@@ -137,8 +155,8 @@ Public Class Form1
         '        Timer1.Enabled = False
         Incoming = SerialPort1.ReadExisting()
         If (Incoming <> "") Then
-            receivedData = Incoming & receivedData
-            RichTextBox1.Text = receivedData
+            receivedData = receivedData & Incoming
+            RichTextBox1.AppendText(Incoming)
         End If
 
     End Sub
@@ -165,10 +183,10 @@ Public Class Form1
                 SerialPort1.WriteLine(Str2Write)
                 SetHeight_TB.Text = ""
             Else
-                MsgBox("No Value Set")
+                MsgBox("No Value Set", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
             End If
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -182,10 +200,10 @@ Public Class Form1
                 SerialPort1.WriteLine(Str2Write)
                 SetSpeed_TB.Text = ""
             Else
-                MsgBox("No Value Set")
+                MsgBox("No Value Set", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
             End If
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -220,7 +238,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("CH#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -229,7 +247,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("AU#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -238,7 +256,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("AD#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -247,7 +265,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("GH#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -256,7 +274,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("GS#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -265,7 +283,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("GD#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -274,7 +292,7 @@ Public Class Form1
         If (connected) Then
             SerialPort1.WriteLine("GN#")
         Else
-            MsgBox("Not connected")
+            MsgBox("Not connected", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
         End If
     End Sub
 
@@ -289,4 +307,43 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub AboutToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles About_MNU.Click
+        MsgBox("Moto-Mast Desktop Control Application Ver. 1.10", MsgBoxStyle.Information, "Moto-Mast Desktop Control")
+
+    End Sub
+
+    Private Sub Exit_MNU_Click(sender As Object, e As EventArgs) Handles Exit_MNU.Click
+        Me.Close()
+
+    End Sub
+
+    Private Sub SerialPort_MNU_Click(sender As Object, e As EventArgs) Handles SerialPort_MNU.Click
+        comPort_ComboBox.DroppedDown = True
+
+    End Sub
+
+    Private Sub Baud1200_MNU_Click(sender As Object, e As EventArgs) Handles Baud1200_MNU.Click
+        SavedBaud = 1200
+    End Sub
+
+    Private Sub Baud2400_MNU_Click(sender As Object, e As EventArgs) Handles Baud2400_MNU.Click
+        SavedBaud = 2400
+    End Sub
+
+    Private Sub Baud9600_MNU_Click(sender As Object, e As EventArgs) Handles Baud9600_MNU.Click
+        SavedBaud = 9600
+    End Sub
+
+    Private Sub Baud19200_MNU_Click(sender As Object, e As EventArgs) Handles Baud19200_MNU.Click
+        SavedBaud = 19200
+    End Sub
+
+    Private Sub Baud38400_MNU_Click(sender As Object, e As EventArgs) Handles Baud38400_MNU.Click
+        SavedBaud = 38400
+    End Sub
+
+    Private Sub SaveSettings_MNU_Click(sender As Object, e As EventArgs) Handles SaveSettings_MNU.Click
+        My.Settings.MyCOMPort = SavedcomPORT
+        My.Settings.MyBAUDRate = SavedBaud
+    End Sub
 End Class

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30309.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "WFA_ArduinoSerial_001", "WFA_ArduinoSerial_001\WFA_ArduinoSerial_001.vbproj", "{38D3AB55-1324-4043-BDD4-61D142394077}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Moto-Mast Desktop Control", "WFA_ArduinoSerial_001\Moto-Mast Desktop Control.vbproj", "{38D3AB55-1324-4043-BDD4-61D142394077}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +18,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BDA5067E-5164-4475-B938-3117E6EEF11A}
 	EndGlobalSection
 EndGlobal

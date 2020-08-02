@@ -1,0 +1,3 @@
+﻿1>------ Build started: Project: Moto-Mast Desktop Control, Configuration: Release Any CPU ------
+1>  Moto-Mast Desktop Control -> D:\Documents\Arduino\Winch Serial Control App\WFA_ArduinoSerial_001\WFA_ArduinoSerial_001\bin\Release\WFA_ArduinoSerial_001.exe
+========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========
